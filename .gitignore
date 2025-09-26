@@ -1,0 +1,62 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+.nb-gradle/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+!**/src/main/**/logs/
+!**/src/test/**/logs/
+
+# Temp files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Spring Boot
+!**/src/main/**/resources/
+!**/src/test/**/resources/
+
+# Application properties (можно заигнорить если есть шаблоны)
+!**/src/main/**/application*.yml
+!**/src/main/**/application*.properties
+!**/src/test/**/application*.yml
+!**/src/test/**/application*.properties
+
+# Git
+!.gitignore
+
+# Build outputs
+**/target/
+**/build/
+**/out/
+**/dist/
