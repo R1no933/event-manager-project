@@ -1,5 +1,7 @@
-package dev.baskakov.eventmanagerservice.location;
+package dev.baskakov.eventmanagerservice.location.utils;
 
+import dev.baskakov.eventmanagerservice.location.Location;
+import dev.baskakov.eventmanagerservice.location.LocationDTO;
 import org.springframework.stereotype.Component;
 
 @Component
