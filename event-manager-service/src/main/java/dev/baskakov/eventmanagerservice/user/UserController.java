@@ -4,6 +4,7 @@ import dev.baskakov.eventmanagerservice.security.jwt.AuthenticationService;
 import dev.baskakov.eventmanagerservice.security.jwt.JwtTokenResponse;
 import dev.baskakov.eventmanagerservice.user.utils.SignInRequest;
 import dev.baskakov.eventmanagerservice.user.utils.SignUpRequest;
+import dev.baskakov.eventmanagerservice.user.utils.UserConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,13 +19,16 @@ public class UserController {
 
     private final UserService userService;
     private final AuthenticationService authenticationService;
+    private final UserConverter userConverter;
 
     public UserController(
             UserService userService,
-            AuthenticationService authenticationService
+            AuthenticationService authenticationService,
+            UserConverter userConverter
     ) {
         this.userService = userService;
         this.authenticationService = authenticationService;
+        this.userConverter = userConverter;
     }
 
     @PostMapping
@@ -33,14 +37,10 @@ public class UserController {
     ) {
         logger.info("Received request to register user {}", signUpRequest.login());
         var user = userService.registerUser(signUpRequest);
+        var responseUser = userConverter.convertToDto(user);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(new UserDto(
-                        user.id(),
-                        user.login(),
-                        user.age(),
-                        user.role()
-                ));
+                .body(responseUser);
     }
 
     @PostMapping("/auth")
@@ -59,13 +59,9 @@ public class UserController {
             @PathVariable Long id
     ){
         var foundedUser = userService.findById(id);
+        var responseUser = userConverter.convertToDto(foundedUser);
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(new UserDto(
-                        foundedUser.id(),
-                        foundedUser.login(),
-                        foundedUser.age(),
-                        foundedUser.role()
-                ));
+                .body(responseUser);
     }
 }

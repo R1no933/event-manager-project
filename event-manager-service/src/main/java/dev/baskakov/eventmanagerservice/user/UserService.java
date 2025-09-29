@@ -1,6 +1,7 @@
 package dev.baskakov.eventmanagerservice.user;
 
 import dev.baskakov.eventmanagerservice.user.utils.SignUpRequest;
+import dev.baskakov.eventmanagerservice.user.utils.UserConverter;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,13 +11,16 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserConverter userConverter;
 
     public UserService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            UserConverter userConverter
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userConverter = userConverter;
     }
     public User registerUser(
             SignUpRequest signUpRequest
@@ -34,13 +38,8 @@ public class UserService {
         );
 
         var saved = userRepository.save(newUser);
-
-        return new User(
-                saved.getId(),
-                saved.getLogin(),
-                saved.getAge(),
-                UserRole.valueOf(saved.getRole())
-        );
+        var responseUser = userConverter.convertToDomain(saved);
+        return responseUser;
     }
 
 
@@ -48,22 +47,17 @@ public class UserService {
         var user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new EntityNotFoundException("User with login " + login + " not found"));
 
-        return new User(
-                user.getId(),
-                user.getLogin(),
-                user.getAge(),
-                UserRole.valueOf(user.getRole())
-        );
+        var responseUser = userConverter.convertToDomain(user);
+        return responseUser;
     }
 
     public User findById(Long id) {
         var foundedUSer = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User with id " + id + " not found"));
-        return new User(
-                foundedUSer.getId(),
-                foundedUSer.getLogin(),
-                foundedUSer.getAge(),
-                UserRole.valueOf(foundedUSer.getRole())
-        );
+
+        var responseUser = userConverter.convertToDomain(foundedUSer);
+        return responseUser;
     }
+
+
 }
