@@ -24,6 +24,21 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
+    private final String[] SWAGGER_WHITELIST = {
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/swagger-resources",
+            "/webjars/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/event-manager-openapi.yaml",
+            "/api-docs/**",
+            "/openapi.json",
+            "/openapi.yaml"
+    };
+
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtTokenFilter  jwtTokenFilter;
     private final CustomAccessDeniedHandler  customAccessDeniedHandler;
@@ -47,6 +62,8 @@ public class SecurityConfiguration {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a ->
                         a
+                                .requestMatchers(SWAGGER_WHITELIST).permitAll()
+
                                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/users/auth").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/users/**").hasAnyAuthority("ADMIN")
