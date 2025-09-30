@@ -1,10 +1,12 @@
 package dev.baskakov.eventmanagerservice.location;
 
+import dev.baskakov.eventmanagerservice.location.utils.LocationEntityConverter;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 public class LocationService {
