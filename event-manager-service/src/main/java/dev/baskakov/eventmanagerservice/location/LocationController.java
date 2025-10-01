@@ -20,7 +20,8 @@ public class LocationController {
     private final LocationDtoConverter locationDtoConverter;
 
     public LocationController(LocationService locationService,
-                              LocationDtoConverter locationDtoConverter) {
+                              LocationDtoConverter locationDtoConverter
+    ) {
         this.locationService = locationService;
         this.locationDtoConverter = locationDtoConverter;
     }
@@ -31,8 +32,7 @@ public class LocationController {
     ) {
         LOGGER.info("Get request to create location : {}", locationToCreate);
         Location requestLocation = locationService.createLocation(
-                locationDtoConverter.toDomain(locationToCreate)
-        );
+                locationDtoConverter.toDomain(locationToCreate));
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -45,7 +45,9 @@ public class LocationController {
     ) {
         LOGGER.info("Get request to get location with id: {}", locationId);
         Location foundLocation = locationService.getLocationById(locationId);
-        return ResponseEntity.ok(locationDtoConverter.toDTO(foundLocation));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(locationDtoConverter.toDTO(foundLocation));
     }
 
     @GetMapping

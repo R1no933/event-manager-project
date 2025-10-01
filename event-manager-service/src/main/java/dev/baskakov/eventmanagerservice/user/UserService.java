@@ -38,8 +38,7 @@ public class UserService {
         );
 
         var saved = userRepository.save(newUser);
-        var responseUser = userConverter.convertToDomain(saved);
-        return responseUser;
+        return userConverter.convertToDomain(saved);
     }
 
 
@@ -47,17 +46,13 @@ public class UserService {
         var user = userRepository.findByLogin(login)
                 .orElseThrow(() -> new EntityNotFoundException("User with login " + login + " not found"));
 
-        var responseUser = userConverter.convertToDomain(user);
-        return responseUser;
+        return userConverter.convertToDomain(user);
     }
 
     public User findById(Long id) {
         var foundedUSer = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User with id " + id + " not found"));
 
-        var responseUser = userConverter.convertToDomain(foundedUSer);
-        return responseUser;
+        return userConverter.convertToDomain(foundedUSer);
     }
-
-
 }

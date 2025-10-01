@@ -57,7 +57,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(
             @PathVariable Long id
-    ){
+    ) {
         logger.info("Received request to get user by id {}", id);
         var foundedUser = userService.findById(id);
         var responseUser = userConverter.convertToDto(foundedUser);

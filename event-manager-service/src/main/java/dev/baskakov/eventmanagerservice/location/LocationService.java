@@ -5,7 +5,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -15,7 +14,8 @@ public class LocationService {
     private final LocationEntityConverter locationEntityConverter;
 
     public LocationService(LocationRepository locationRepository,
-                           LocationEntityConverter locationEntityConverter) {
+                           LocationEntityConverter locationEntityConverter
+                           ) {
         this.locationRepository = locationRepository;
         this.locationEntityConverter = locationEntityConverter;
     }
@@ -27,7 +27,7 @@ public class LocationService {
     }
 
     public Location getLocationById(Long locationId) {
-        var  locationToFind = locationRepository.findById(locationId)
+        var locationToFind = locationRepository.findById(locationId)
                 .orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + locationId));
         return locationEntityConverter.toDomain(locationToFind);
     }
@@ -60,9 +60,7 @@ public class LocationService {
                 updatedLocation.description()
         );
 
-        return locationEntityConverter
-                .toDomain(locationRepository
-                        .findById(locationId)
-                        .orElseThrow());
+        var updateLocation = locationRepository.findById(locationId).orElseThrow();
+        return locationEntityConverter.toDomain(updateLocation);
     }
 }
