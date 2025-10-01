@@ -1,10 +1,9 @@
 package dev.baskakov.eventmanagerservice.events.event.utils;
 
-import dev.baskakov.eventmanagerservice.events.event.Event;
-import dev.baskakov.eventmanagerservice.events.event.EventDto;
-import dev.baskakov.eventmanagerservice.events.event.EventEntity;
-import dev.baskakov.eventmanagerservice.events.registration.EventRegistration;
-import dev.baskakov.eventmanagerservice.events.registration.EventRegistrationEntity;
+import dev.baskakov.eventmanagerservice.events.event.model.domain.Event;
+import dev.baskakov.eventmanagerservice.events.event.model.dto.EventDto;
+import dev.baskakov.eventmanagerservice.events.event.model.entity.EventEntity;
+import dev.baskakov.eventmanagerservice.events.registration.model.domain.EventRegistration;
 import org.springframework.stereotype.Component;
 
 @Component

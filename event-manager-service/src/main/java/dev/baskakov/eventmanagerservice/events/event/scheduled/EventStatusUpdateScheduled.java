@@ -1,7 +1,7 @@
 package dev.baskakov.eventmanagerservice.events.event.scheduled;
 
-import dev.baskakov.eventmanagerservice.events.event.EventRepository;
-import dev.baskakov.eventmanagerservice.events.event.EventStatus;
+import dev.baskakov.eventmanagerservice.events.event.repository.EventRepository;
+import dev.baskakov.eventmanagerservice.events.event.model.EventStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;

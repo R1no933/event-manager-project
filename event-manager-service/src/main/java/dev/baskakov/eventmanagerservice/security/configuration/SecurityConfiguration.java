@@ -3,7 +3,7 @@ package dev.baskakov.eventmanagerservice.security.configuration;
 import dev.baskakov.eventmanagerservice.exception.CustomAccessDeniedHandler;
 import dev.baskakov.eventmanagerservice.exception.CustomAuthenticationEntryPoint;
 import dev.baskakov.eventmanagerservice.security.jwt.JwtTokenFilter;
-import dev.baskakov.eventmanagerservice.user.utils.CustomUserDetailsService;
+import dev.baskakov.eventmanagerservice.user.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
