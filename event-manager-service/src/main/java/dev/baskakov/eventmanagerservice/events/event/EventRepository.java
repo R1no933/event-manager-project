@@ -1,5 +1,6 @@
 package dev.baskakov.eventmanagerservice.events.event;
 
+import ch.qos.logback.core.status.Status;
 import dev.baskakov.eventmanagerservice.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -52,5 +53,23 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
 
     List<EventEntity> findAllByOwnerIdIs(
             @Param("userId") Long userId
+    );
+
+    @Query("""
+            SELECT e.id FROM EventEntity e
+            WHERE e.date < CURRENT TIMESTAMP 
+            AND e.status = :eventStatus
+            """)
+    List<Long> findAllStartedEventsWithStatus(
+            @Param("eventStatus") EventStatus  eventStatus
+    );
+
+    @Query(value = """
+            SELECT e.id FROM events e
+            WHERE e.date + INTERVAL '1 minute' * e.duration > NOW() 
+            AND e.status = :eventStatus
+            """, nativeQuery = true)
+    List<Long> findAllEndedEventsWithStatus(
+            @Param("eventStatus") EventStatus  eventStatus
     );
 }
