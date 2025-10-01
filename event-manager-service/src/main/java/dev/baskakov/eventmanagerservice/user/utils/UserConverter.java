@@ -1,9 +1,9 @@
 package dev.baskakov.eventmanagerservice.user.utils;
 
-import dev.baskakov.eventmanagerservice.user.User;
-import dev.baskakov.eventmanagerservice.user.UserDto;
-import dev.baskakov.eventmanagerservice.user.UserEntity;
-import dev.baskakov.eventmanagerservice.user.UserRole;
+import dev.baskakov.eventmanagerservice.user.model.domain.User;
+import dev.baskakov.eventmanagerservice.user.model.dto.UserDto;
+import dev.baskakov.eventmanagerservice.user.model.entity.UserEntity;
+import dev.baskakov.eventmanagerservice.user.model.UserRole;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -26,13 +26,16 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ServerErrorDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        String detailMessage = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
+    @ExceptionHandler({
+            MethodArgumentNotValidException.class,
+            IllegalArgumentException.class
+    })
+    public ResponseEntity<ServerErrorDto> handleNotValidException(Exception ex) {
+
+
+        String detailMessage = ex instanceof  MethodArgumentNotValidException
+                ? constructMethodArgumentNotValidMessage((MethodArgumentNotValidException) ex)
+                : ex.getMessage();
 
         var error = new ServerErrorDto(
                 "Некорректный запрос",
@@ -53,8 +56,17 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
 
-        return  ResponseEntity
+        return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(error);
+    }
+
+    private static String constructMethodArgumentNotValidMessage(MethodArgumentNotValidException ex) {
+        return ex
+                .getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .collect(Collectors.joining(", "));
     }
 }

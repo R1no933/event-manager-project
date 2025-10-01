@@ -1,13 +1,11 @@
 package dev.baskakov.eventmanagerservice.user.utils;
 
-import dev.baskakov.eventmanagerservice.user.UserEntity;
-import dev.baskakov.eventmanagerservice.user.UserRepository;
-import dev.baskakov.eventmanagerservice.user.UserRole;
+import dev.baskakov.eventmanagerservice.user.model.entity.UserEntity;
+import dev.baskakov.eventmanagerservice.user.repository.UserRepository;
+import dev.baskakov.eventmanagerservice.user.model.UserRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
