@@ -1,13 +1,20 @@
 package dev.baskakov.eventmanagerservice.events.event.utils;
 
+import dev.baskakov.eventmanagerservice.events.event.model.EventStatus;
 import dev.baskakov.eventmanagerservice.events.event.model.domain.Event;
+import dev.baskakov.eventmanagerservice.events.event.model.dto.EventCreateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventDto;
 import dev.baskakov.eventmanagerservice.events.event.model.entity.EventEntity;
 import dev.baskakov.eventmanagerservice.events.registration.model.domain.EventRegistration;
+import dev.baskakov.eventmanagerservice.events.registration.model.entity.EventRegistrationEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class EventConverter {
+
     public Event toDomainFromEntity(EventEntity eventEntity) {
         return new Event(
                 eventEntity.getId(),
@@ -37,6 +44,47 @@ public class EventConverter {
                 event.ownerId(),
                 event.maxPlaces(),
                 event.registrationList().size(),
+                event.date(),
+                event.cost(),
+                event.duration(),
+                event.locationId(),
+                event.status()
+        );
+    }
+
+
+    public Event toDomainFromCreateRequestDto(
+            EventCreateRequestDto eventCreateRequestDto,
+            Long userId) {
+        return new Event(
+                null,
+                eventCreateRequestDto.name(),
+                userId,
+                eventCreateRequestDto.maxPlaces(),
+                List.of(),
+                eventCreateRequestDto.date(),
+                eventCreateRequestDto.cost(),
+                eventCreateRequestDto.duration(),
+                eventCreateRequestDto.locationId(),
+                EventStatus.WAIT_START
+        );
+    }
+
+    public EventEntity toEntityFromDomain(Event event) {
+        return new EventEntity(
+                event.id() != null ? event.id() : null,
+                event.name(),
+                event.ownerId(),
+                event.maxPlaces(),
+                event.registrationList()
+                        .stream()
+                        .map(e ->
+                                new EventRegistrationEntity(
+                                        e.id(),
+                                        e.userId(),
+                                        this.toEntityFromDomain(event))
+                        )
+                        .toList(),
                 event.date(),
                 event.cost(),
                 event.duration(),

@@ -15,6 +15,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,18 +49,8 @@ public class EventService {
         }
 
         var currentUser = authenticationService.getCurrentUser();
-        var eventEntity = new EventEntity(
-                null,
-                eventToCreate.name(),
-                currentUser.id(),
-                eventToCreate.maxPlaces(),
-                List.of(),
-                eventToCreate.date(),
-                eventToCreate.cost(),
-                eventToCreate.duration(),
-                eventToCreate.locationId(),
-                EventStatus.WAIT_START
-        );
+        var eventToCreateDomain = eventConverter.toDomainFromCreateRequestDto(eventToCreate, currentUser.id());
+        var eventEntity = eventConverter.toEntityFromDomain(eventToCreateDomain);
 
         eventEntity = eventRepository.save(eventEntity);
         log.info("Created event with id: {}", eventEntity.getId());
@@ -74,6 +65,7 @@ public class EventService {
         return eventConverter.toDomainFromEntity(foundedEvent);
     }
 
+    @Transactional
     public void cancelEventById(Long id) {
         checkUserBenefitsToModifyEvent(id);
         var event = findEventById(id);

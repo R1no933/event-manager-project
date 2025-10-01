@@ -32,6 +32,19 @@ public class UserEntity {
         this.role = UserRole.USER.name();
     }
 
+    public UserEntity(
+            Long id,
+            String login,
+            String password,
+            Integer age,
+            String role
+    ) {
+        this.id = id;
+        this.login = login;
+        this.password = password;
+        this.age = age;
+        this.role = role;
+    }
 
     public Long getId() {
         return id;

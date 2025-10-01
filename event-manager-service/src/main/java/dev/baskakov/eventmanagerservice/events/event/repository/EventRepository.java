@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface EventRepository extends JpaRepository<EventEntity, Long> {
 
-    @Transactional
+
     @Modifying
     @Query("UPDATE EventEntity e set e.status = :status WHERE e.id = :id")
     void changeEventStatus(
@@ -54,21 +54,22 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
             @Param("userId") Long userId
     );
 
+    @Modifying
     @Query("""
-            SELECT e.id FROM EventEntity e
-            WHERE e.date < CURRENT TIMESTAMP 
-            AND e.status = :eventStatus
+            UPDATE EventEntity e SET e.status = 1
+            WHERE e.date < CURRENT TIMESTAMP  AND e.status = :eventStatus
             """)
-    List<Long> findAllStartedEventsWithStatus(
+    void updateAllStartedEventsWithStatusAwaitStart(
             @Param("eventStatus") EventStatus  eventStatus
     );
 
+    @Modifying
     @Query(value = """
-            SELECT e.id FROM events e
-            WHERE e.date + INTERVAL '1 minute' * e.duration > NOW() 
+            UPDATE events e SET status = 2
+            WHERE e.date + INTERVAL '1 minute' * e.duration < NOW()
             AND e.status = :eventStatus
             """, nativeQuery = true)
-    List<Long> findAllEndedEventsWithStatus(
+    void updateAllEndedEventsWithStatusStarted(
             @Param("eventStatus") EventStatus  eventStatus
     );
 }

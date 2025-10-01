@@ -1,6 +1,7 @@
 package dev.baskakov.eventmanagerservice.user.utils;
 
 import dev.baskakov.eventmanagerservice.user.model.domain.User;
+import dev.baskakov.eventmanagerservice.user.model.dto.SignUpRequest;
 import dev.baskakov.eventmanagerservice.user.model.dto.UserDto;
 import dev.baskakov.eventmanagerservice.user.model.entity.UserEntity;
 import dev.baskakov.eventmanagerservice.user.model.UserRole;
@@ -23,6 +24,25 @@ public class UserConverter {
                 user.login(),
                 user.age(),
                 user.role()
+        );
+    }
+
+    public User toDomainFromSignUpRequest(SignUpRequest signUpRequest) {
+        return new User(
+                null,
+                signUpRequest.login(),
+                signUpRequest.age(),
+                UserRole.USER
+        );
+    }
+
+    public UserEntity convertToEntityWithPassword(User user, String password) {
+        return new UserEntity(
+                null,
+                user.login(),
+                password,
+                user.age(),
+                user.role().name()
         );
     }
 }

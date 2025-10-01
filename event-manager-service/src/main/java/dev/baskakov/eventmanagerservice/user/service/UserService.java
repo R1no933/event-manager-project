@@ -1,7 +1,6 @@
 package dev.baskakov.eventmanagerservice.user.service;
 
 import dev.baskakov.eventmanagerservice.user.model.domain.User;
-import dev.baskakov.eventmanagerservice.user.model.entity.UserEntity;
 import dev.baskakov.eventmanagerservice.user.repository.UserRepository;
 import dev.baskakov.eventmanagerservice.user.model.dto.SignUpRequest;
 import dev.baskakov.eventmanagerservice.user.utils.UserConverter;
@@ -31,16 +30,11 @@ public class UserService {
         if (userRepository.existsByLogin(signUpRequest.login())) {
             throw new IllegalArgumentException("Login already exists! Login: " + signUpRequest.login());
         }
-
+        var user = userConverter.toDomainFromSignUpRequest(signUpRequest);
         var hashedPassword = passwordEncoder.encode(signUpRequest.password());
-        var newUser = new UserEntity(
-                null,
-                signUpRequest.login(),
-                hashedPassword,
-                signUpRequest.age()
-        );
+        var userEntity = userConverter.convertToEntityWithPassword(user, hashedPassword);
+        var saved = userRepository.save(userEntity);
 
-        var saved = userRepository.save(newUser);
         return userConverter.convertToDomain(saved);
     }
 

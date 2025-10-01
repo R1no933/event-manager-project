@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -22,19 +23,11 @@ public class EventStatusUpdateScheduled {
         this.eventRepository = eventRepository;
     }
 
+    @Transactional
     @Scheduled(cron = "${event.status.cron}")
     public void updateEventStatus(){
         log.info("Start schedule for update event status at {}", LocalDateTime.now());
-        var notUpdatedStartedEvents = eventRepository.findAllStartedEventsWithStatus(EventStatus.WAIT_START);
-        notUpdatedStartedEvents
-                .forEach(id -> {
-                    eventRepository.changeEventStatus(id, EventStatus.STARTED);
-                });
-
-        var notUpdatedEndedEvents = eventRepository.findAllEndedEventsWithStatus(EventStatus.STARTED);
-        notUpdatedEndedEvents
-                .forEach(id -> {
-                    eventRepository.changeEventStatus(id, EventStatus.FINISHED);
-                });
+        eventRepository.updateAllStartedEventsWithStatusAwaitStart(EventStatus.WAIT_START);
+        eventRepository.updateAllEndedEventsWithStatusStarted(EventStatus.STARTED);
     }
 }

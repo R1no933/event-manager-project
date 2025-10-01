@@ -8,6 +8,7 @@ import dev.baskakov.eventmanagerservice.events.event.utils.EventConverter;
 import dev.baskakov.eventmanagerservice.events.registration.repository.EventRegistrationRepository;
 import dev.baskakov.eventmanagerservice.events.registration.model.entity.EventRegistrationEntity;
 import dev.baskakov.eventmanagerservice.user.model.domain.User;
+import dev.baskakov.eventmanagerservice.user.utils.UserConverter;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,17 +20,20 @@ public class EventRegistrationService {
     private final EventRepository eventRepository;
     private final EventService eventService;
     private final EventConverter eventConverter;
+    private final UserConverter userConverter;
 
     public EventRegistrationService(
             EventRegistrationRepository eventRegistrationRepository,
             EventRepository eventRepository,
             EventService eventService,
-            EventConverter eventConverter
+            EventConverter eventConverter,
+            UserConverter userConverter
     ) {
         this.eventRegistrationRepository = eventRegistrationRepository;
         this.eventRepository = eventRepository;
         this.eventService = eventService;
         this.eventConverter = eventConverter;
+        this.userConverter = userConverter;
     }
 
     public void registerUserOnEvent(
@@ -52,11 +56,14 @@ public class EventRegistrationService {
             throw new IllegalArgumentException("User with id " + user.id() + " already registered on event with id " +  eventId);
         }
 
-        eventRegistrationRepository.save(new EventRegistrationEntity(
+        var userId = user.id();
+        var registerEntity = new EventRegistrationEntity(
                 null,
-                user.id(),
+                userId,
                 eventRepository.findById(eventId).orElseThrow()
-        ));
+        );
+
+        eventRegistrationRepository.save(registerEntity);
     }
 
     public void cancelUserRegistrationOnEvent(
