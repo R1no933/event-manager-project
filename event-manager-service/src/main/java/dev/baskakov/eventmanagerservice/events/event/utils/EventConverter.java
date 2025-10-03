@@ -3,9 +3,11 @@ package dev.baskakov.eventmanagerservice.events.event.utils;
 import dev.baskakov.eventmanagerservice.events.event.model.EventStatus;
 import dev.baskakov.eventmanagerservice.events.event.model.domain.Event;
 import dev.baskakov.eventmanagerservice.events.event.model.domain.EventSearch;
+import dev.baskakov.eventmanagerservice.events.event.model.domain.EventUpdate;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventCreateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventSearchRequestDto;
+import dev.baskakov.eventmanagerservice.events.event.model.dto.EventUpdateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.entity.EventEntity;
 import dev.baskakov.eventmanagerservice.events.registration.model.domain.EventRegistration;
 import dev.baskakov.eventmanagerservice.events.registration.model.entity.EventRegistrationEntity;
@@ -38,22 +40,6 @@ public class EventConverter {
         );
     }
 
-    public EventDto toDtoFromDomain(Event event) {
-        return new EventDto(
-                event.id(),
-                event.name(),
-                event.ownerId(),
-                event.maxPlaces(),
-                event.registrationList().size(),
-                event.date(),
-                event.cost(),
-                event.duration(),
-                event.locationId(),
-                event.status()
-        );
-    }
-
-
     public Event toDomainFromCreateRequestDto(
             EventCreateRequestDto eventCreateRequestDto,
             Long userId) {
@@ -70,6 +56,52 @@ public class EventConverter {
                 EventStatus.WAIT_START
         );
     }
+
+    public Event applyUpdateRequestDto(
+            Event event,
+            EventUpdateRequestDto eventUpdateRequestDto
+            ) {
+        return new Event(
+                event.id(),
+                eventUpdateRequestDto.name() != null
+                        ? eventUpdateRequestDto.name()
+                        : event.name(),
+                event.ownerId(),
+                eventUpdateRequestDto.maxPlaces() != null
+                        ? eventUpdateRequestDto.maxPlaces()
+                        : event.maxPlaces(),
+                event.registrationList(),
+                eventUpdateRequestDto.date() != null
+                        ? eventUpdateRequestDto.date()
+                        : event.date(),
+                eventUpdateRequestDto.cost() != null
+                        ? eventUpdateRequestDto.cost()
+                        : event.cost(),
+                eventUpdateRequestDto.duration() != null
+                        ? eventUpdateRequestDto.duration()
+                        : event.duration(),
+                eventUpdateRequestDto.locationId() != null
+                        ? eventUpdateRequestDto.locationId()
+                        : event.locationId(),
+                event.status()
+        );
+    }
+
+    public EventDto toDtoFromDomain(Event event) {
+        return new EventDto(
+                event.id(),
+                event.name(),
+                event.ownerId(),
+                event.maxPlaces(),
+                event.registrationList().size(),
+                event.date(),
+                event.cost(),
+                event.duration(),
+                event.locationId(),
+                event.status()
+        );
+    }
+
 
     public EventEntity toEntityFromDomain(Event event) {
         return new EventEntity(
@@ -107,6 +139,34 @@ public class EventConverter {
                 eventSearchRequestDto.durationMax(),
                 eventSearchRequestDto.locationId(),
                 eventSearchRequestDto.eventStatus()
+        );
+    }
+
+    public EventUpdate toDomainUpdateFromDto(EventUpdateRequestDto eventUpdateRequestDto) {
+        return new EventUpdate(
+                eventUpdateRequestDto.name(),
+                eventUpdateRequestDto.maxPlaces(),
+                eventUpdateRequestDto.date(),
+                eventUpdateRequestDto.cost(),
+                eventUpdateRequestDto.duration(),
+                eventUpdateRequestDto.locationId()
+        );
+    }
+
+    public Event withStatus(Event event,
+                            EventStatus eventStatus
+    ) {
+        return new Event(
+                event.id(),
+                event.name(),
+                event.ownerId(),
+                event.maxPlaces(),
+                event.registrationList(),
+                event.date(),
+                event.cost(),
+                event.duration(),
+                event.locationId(),
+                eventStatus
         );
     }
 }

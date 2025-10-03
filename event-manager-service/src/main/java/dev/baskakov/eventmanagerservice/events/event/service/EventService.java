@@ -1,11 +1,13 @@
 package dev.baskakov.eventmanagerservice.events.event.service;
 
+import dev.baskakov.eventmanagerservice.events.event.model.EventStatus;
 import dev.baskakov.eventmanagerservice.events.event.model.domain.Event;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventCreateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventSearchRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventUpdateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.repository.EventRepository;
 import dev.baskakov.eventmanagerservice.events.event.utils.EventConverter;
+import dev.baskakov.eventmanagerservice.location.model.domain.Location;
 import dev.baskakov.eventmanagerservice.location.service.LocationService;
 import dev.baskakov.eventmanagerservice.security.jwt.AuthenticationService;
 import dev.baskakov.eventmanagerservice.user.model.UserRole;
@@ -13,7 +15,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -39,69 +40,50 @@ public class EventService {
     }
 
     public Event createEvent(EventCreateRequestDto eventToCreate) {
+        log.info("EventService: createEvent - start with event to create: {}", eventToCreate);
         var location = locationService.getLocationById(eventToCreate.locationId());
         var currentUser = authenticationService.getCurrentUser();
-        var eventDomain = eventConverter.toDomainFromCreateRequestDto(eventToCreate, currentUser.id());
-        var createdEvent = eventDomain.createEvent(
-                eventDomain.name(),
-                eventDomain.ownerId(),
-                eventDomain.maxPlaces(),
-                eventDomain.date(),
-                eventDomain.cost(),
-                eventDomain.duration(),
-                eventDomain.locationId(),
-                location
-        );
-
-        var eventEntity = eventConverter.toEntityFromDomain(createdEvent);
-        eventRepository.save(eventEntity);
-        log.info("Created event with id: {}", eventEntity.getId());
-        return eventConverter.toDomainFromEntity(eventEntity);
+        var domainEvent = eventConverter.toDomainFromCreateRequestDto(eventToCreate, currentUser.id());
+        validateEventCreation(domainEvent, location);
+        var entityEvent = eventConverter.toEntityFromDomain(domainEvent);
+        entityEvent = eventRepository.save(entityEvent);
+        return eventConverter.toDomainFromEntity(entityEvent);
     }
 
     public Event findEventById(Long id) {
+        log.info("EventService: findEventById - start with event id: {}", id);
         var foundedEvent = eventRepository
                 .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Event with id: " + id + " does not exist"));
         return eventConverter.toDomainFromEntity(foundedEvent);
     }
 
-    @Transactional
     public void cancelEventById(Long id) {
-        checkUserBenefitsToModifyEvent(id);
+        log.info("EventService: cancelEventById - start with event id: {}", id);
         var event = findEventById(id);
-        var canceledEvent = event.cancelEvent();
-        var canceledEventEntity = eventConverter.toEntityFromDomain(canceledEvent);
-        eventRepository.save(canceledEventEntity);
+        validateCanModifyEvent(event);
+        validateEventCanBeCancelled(event);
+        var cancelledEvent = eventConverter.withStatus(event, EventStatus.CANCELLED);
+        var eventEntity = eventConverter.toEntityFromDomain(cancelledEvent);
+        eventRepository.save(eventEntity);
     }
 
     public Event updateEventById(
             Long id,
             EventUpdateRequestDto eventToUpdate
     ) {
-        checkUserBenefitsToModifyEvent(id);
+        log.info("EventService: updateEventById - start with event id: {}", id);
         var event = findEventById(id);
-        var locationId = eventToUpdate.locationId() != null
-                ? eventToUpdate.locationId() :
-                event.locationId();
-        var location = locationService.getLocationById(locationId);
-        var updatedEvent = event.updateEvent(
-                eventToUpdate.name(),
-                eventToUpdate.maxPlaces(),
-                eventToUpdate.date(),
-                eventToUpdate.duration(),
-                eventToUpdate.duration(),
-                eventToUpdate.locationId(),
-                location
-        );
+        validateCanModifyEvent(event);
+        validateCanUpdateEvent(event, eventToUpdate);
+        var updatedEvent = eventConverter.applyUpdateRequestDto(event, eventToUpdate);
         var eventEntity = eventConverter.toEntityFromDomain(updatedEvent);
         eventEntity = eventRepository.save(eventEntity);
-
         return eventConverter.toDomainFromEntity(eventEntity);
-
     }
 
     public List<Event> searchByFilter(EventSearchRequestDto eventSearchFilter) {
+        log.info("EventService: searchByFilter - start with event filter: {}", eventSearchFilter);
         var searchFilter = eventConverter.toDomainSearchFromDto(eventSearchFilter);
         var searchedEvents = eventRepository.searchEvents(
                 searchFilter.name(),
@@ -124,6 +106,7 @@ public class EventService {
     }
 
     public List<Event> searchEventsForCurrentUser() {
+        log.info("EventService: searchEventsForCurrentUser - start!");
         var currentUser = authenticationService.getCurrentUser();
         var searchedEventList = eventRepository.findAllByOwnerIdIs(currentUser.id());
         return searchedEventList
@@ -132,12 +115,55 @@ public class EventService {
                 .toList();
     }
 
-    private void checkUserBenefitsToModifyEvent(Long eventId) {
+    private void validateEventCreation(
+            Event eventToCreate,
+            Location location
+    ) {
+        if (location.capacity() < eventToCreate.maxPlaces()) {
+            throw new IllegalArgumentException("Max places on current location is: %s, but need for event: %s"
+                    .formatted(location.capacity(), eventToCreate.maxPlaces()));
+        }
+    }
+
+    private void validateCanModifyEvent(
+            Event event
+    ) {
         var currentUser = authenticationService.getCurrentUser();
-        var currentEvent = findEventById(eventId);
-        if (!currentUser.role().equals(UserRole.ADMIN)
-                && !currentUser.id().equals(currentEvent.ownerId())) {
-            throw new IllegalArgumentException("Current user can't modify this event");
+        if (!currentUser.role().equals(UserRole.ADMIN) && !currentUser.id().equals(event.ownerId())) {
+            throw new IllegalArgumentException("Current user can't to modify event");
+        }
+    }
+
+    private void validateEventCanBeCancelled(Event event) {
+        if (event.status().equals(EventStatus.CANCELLED)) {
+            throw new IllegalArgumentException("Can't cancel this event, because event already cancelled");
+        }
+
+        if (event.status().equals(EventStatus.FINISHED) || event.status().equals(EventStatus.STARTED)) {
+            throw new IllegalArgumentException("Can't cancel this event, because event status is " + event.status());
+        }
+    }
+
+    private void validateCanUpdateEvent(Event event, EventUpdateRequestDto eventToUpdate) {
+        var eventToUpdateDomain = eventConverter.toDomainUpdateFromDto(eventToUpdate);
+        if (!event.status().equals(EventStatus.WAIT_START)) {
+            throw new IllegalArgumentException("Can't update this event, because event status is " + event.status());
+        }
+        if (eventToUpdateDomain.maxPlaces() != null || eventToUpdateDomain.locationId() != null) {
+            Long  locationId = eventToUpdateDomain.locationId() != null
+                    ? eventToUpdateDomain.locationId()
+                    : event.locationId();
+            Integer maxPlaces = eventToUpdateDomain.maxPlaces() != null
+                    ? eventToUpdateDomain.maxPlaces()
+                    : event.maxPlaces();
+            var currentLocation = locationService.getLocationById(locationId);
+            if (currentLocation.capacity() <  maxPlaces) {
+                throw new IllegalArgumentException("Location capacity exceeded!");
+            }
+        }
+
+        if (eventToUpdateDomain.maxPlaces() != null && event.registrationList().size() < eventToUpdateDomain.maxPlaces()) {
+            throw new IllegalArgumentException("Can't reduced places below current registration!");
         }
     }
 }
