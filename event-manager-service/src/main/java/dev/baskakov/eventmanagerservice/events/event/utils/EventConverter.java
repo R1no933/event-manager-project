@@ -2,12 +2,13 @@ package dev.baskakov.eventmanagerservice.events.event.utils;
 
 import dev.baskakov.eventmanagerservice.events.event.model.EventStatus;
 import dev.baskakov.eventmanagerservice.events.event.model.domain.Event;
+import dev.baskakov.eventmanagerservice.events.event.model.domain.EventSearch;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventCreateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventDto;
+import dev.baskakov.eventmanagerservice.events.event.model.dto.EventSearchRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.entity.EventEntity;
 import dev.baskakov.eventmanagerservice.events.registration.model.domain.EventRegistration;
 import dev.baskakov.eventmanagerservice.events.registration.model.entity.EventRegistrationEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -90,6 +91,22 @@ public class EventConverter {
                 event.duration(),
                 event.locationId(),
                 event.status()
+        );
+    }
+
+    public EventSearch toDomainSearchFromDto(EventSearchRequestDto eventSearchRequestDto) {
+        return new EventSearch(
+                eventSearchRequestDto.name(),
+                eventSearchRequestDto.placesMin(),
+                eventSearchRequestDto.placesMax(),
+                eventSearchRequestDto.dateStartAfter(),
+                eventSearchRequestDto.dateStartBefore(),
+                eventSearchRequestDto.costMin(),
+                eventSearchRequestDto.costMax(),
+                eventSearchRequestDto.durationMin(),
+                eventSearchRequestDto.durationMax(),
+                eventSearchRequestDto.locationId(),
+                eventSearchRequestDto.eventStatus()
         );
     }
 }

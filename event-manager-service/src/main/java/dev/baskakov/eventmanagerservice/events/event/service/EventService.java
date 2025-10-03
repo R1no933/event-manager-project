@@ -1,11 +1,9 @@
 package dev.baskakov.eventmanagerservice.events.event.service;
 
-import dev.baskakov.eventmanagerservice.events.event.model.EventStatus;
 import dev.baskakov.eventmanagerservice.events.event.model.domain.Event;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventCreateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventSearchRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventUpdateRequestDto;
-import dev.baskakov.eventmanagerservice.events.event.model.entity.EventEntity;
 import dev.baskakov.eventmanagerservice.events.event.repository.EventRepository;
 import dev.baskakov.eventmanagerservice.events.event.utils.EventConverter;
 import dev.baskakov.eventmanagerservice.location.service.LocationService;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class EventService {
@@ -43,18 +40,22 @@ public class EventService {
 
     public Event createEvent(EventCreateRequestDto eventToCreate) {
         var location = locationService.getLocationById(eventToCreate.locationId());
-        if (location.capacity() < eventToCreate.maxPlaces()) {
-            throw new IllegalArgumentException("Max places on current location is: %s, but need for event: %s"
-                    .formatted(location.capacity(), eventToCreate.maxPlaces()));
-        }
-
         var currentUser = authenticationService.getCurrentUser();
-        var eventToCreateDomain = eventConverter.toDomainFromCreateRequestDto(eventToCreate, currentUser.id());
-        var eventEntity = eventConverter.toEntityFromDomain(eventToCreateDomain);
+        var eventDomain = eventConverter.toDomainFromCreateRequestDto(eventToCreate, currentUser.id());
+        var createdEvent = eventDomain.createEvent(
+                eventDomain.name(),
+                eventDomain.ownerId(),
+                eventDomain.maxPlaces(),
+                eventDomain.date(),
+                eventDomain.cost(),
+                eventDomain.duration(),
+                eventDomain.locationId(),
+                location
+        );
 
-        eventEntity = eventRepository.save(eventEntity);
+        var eventEntity = eventConverter.toEntityFromDomain(createdEvent);
+        eventRepository.save(eventEntity);
         log.info("Created event with id: {}", eventEntity.getId());
-
         return eventConverter.toDomainFromEntity(eventEntity);
     }
 
@@ -69,17 +70,9 @@ public class EventService {
     public void cancelEventById(Long id) {
         checkUserBenefitsToModifyEvent(id);
         var event = findEventById(id);
-
-        if (event.status().equals(EventStatus.CANCELLED)) {
-            log.info("Event with id: {} has been already cancelled", id);
-            return;
-        }
-
-        if (event.status().equals(EventStatus.FINISHED) || event.status().equals(EventStatus.STARTED)) {
-            throw new IllegalArgumentException("Can't cancel this event, because event status is " + event.status());
-        }
-
-        eventRepository.changeEventStatus(id, EventStatus.CANCELLED);
+        var canceledEvent = event.cancelEvent();
+        var canceledEventEntity = eventConverter.toEntityFromDomain(canceledEvent);
+        eventRepository.save(canceledEventEntity);
     }
 
     public Event updateEventById(
@@ -87,63 +80,44 @@ public class EventService {
             EventUpdateRequestDto eventToUpdate
     ) {
         checkUserBenefitsToModifyEvent(id);
-        var event = eventRepository.findById(id).orElseThrow();
+        var event = findEventById(id);
+        var locationId = eventToUpdate.locationId() != null
+                ? eventToUpdate.locationId() :
+                event.locationId();
+        var location = locationService.getLocationById(locationId);
+        var updatedEvent = event.updateEvent(
+                eventToUpdate.name(),
+                eventToUpdate.maxPlaces(),
+                eventToUpdate.date(),
+                eventToUpdate.duration(),
+                eventToUpdate.duration(),
+                eventToUpdate.locationId(),
+                location
+        );
+        var eventEntity = eventConverter.toEntityFromDomain(updatedEvent);
+        eventEntity = eventRepository.save(eventEntity);
 
-        if (!event.getStatus().equals(EventStatus.WAIT_START)) {
-            throw new IllegalArgumentException("Can't modify current event, because event status is " + event.getStatus());
-        }
-
-        if (eventToUpdate.maxPlaces() != null || eventToUpdate.locationId() != null) {
-            var locationId = Optional.ofNullable(eventToUpdate.locationId()).orElse(event.getLocationId());
-            var maxPlaces = Optional.ofNullable(eventToUpdate.maxPlaces()).orElse(event.getMaxPlaces());
-            var location = locationService.getLocationById(locationId);
-            if (location.capacity() < maxPlaces) {
-                throw new IllegalArgumentException("Max places on current location is: %s, but need for event: %s"
-                        .formatted(location.capacity(), maxPlaces));
-            }
-        }
-
-        if (eventToUpdate.maxPlaces() != null && event.getRegistrationList().size() > eventToUpdate.maxPlaces()) {
-            throw new IllegalArgumentException("Can't update, because need places %s, have places %s"
-                    .formatted(event.getRegistrationList().size(), eventToUpdate.maxPlaces()));
-        }
-
-        Optional.ofNullable(eventToUpdate.name())
-                .ifPresent(event::setName);
-        Optional.ofNullable(eventToUpdate.maxPlaces())
-                .ifPresent(event::setMaxPlaces);
-        Optional.ofNullable(eventToUpdate.date())
-                .ifPresent(event::setDate);
-        Optional.ofNullable(eventToUpdate.cost())
-                .ifPresent(event::setCost);
-        Optional.ofNullable(eventToUpdate.duration())
-                .ifPresent(event::setDuration);
-        Optional.ofNullable(eventToUpdate.locationId())
-                .ifPresent(event::setLocationId);
-
-        eventRepository.save(event);
-
-        return findEventById(id);
+        return eventConverter.toDomainFromEntity(eventEntity);
 
     }
 
     public List<Event> searchByFilter(EventSearchRequestDto eventSearchFilter) {
-        var searchedEventList = eventRepository
-                .searchEvents(
-                        eventSearchFilter.name(),
-                        eventSearchFilter.placesMin(),
-                        eventSearchFilter.placesMax(),
-                        eventSearchFilter.dateStartAfter(),
-                        eventSearchFilter.dateStartBefore(),
-                        eventSearchFilter.costMin(),
-                        eventSearchFilter.costMax(),
-                        eventSearchFilter.durationMin(),
-                        eventSearchFilter.durationMax(),
-                        eventSearchFilter.locationId(),
-                        eventSearchFilter.eventStatus()
-                );
+        var searchFilter = eventConverter.toDomainSearchFromDto(eventSearchFilter);
+        var searchedEvents = eventRepository.searchEvents(
+                searchFilter.name(),
+                searchFilter.placesMin(),
+                searchFilter.placesMax(),
+                searchFilter.dateStartAfter(),
+                searchFilter.dateStartBefore(),
+                searchFilter.costMin(),
+                searchFilter.costMax(),
+                searchFilter.durationMin(),
+                searchFilter.durationMax(),
+                searchFilter.locationId(),
+                searchFilter.eventStatus()
+        );
 
-        return searchedEventList
+        return searchedEvents
                 .stream()
                 .map(eventConverter::toDomainFromEntity)
                 .toList();
