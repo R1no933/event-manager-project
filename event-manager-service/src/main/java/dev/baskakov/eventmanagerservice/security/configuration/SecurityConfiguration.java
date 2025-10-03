@@ -3,7 +3,7 @@ package dev.baskakov.eventmanagerservice.security.configuration;
 import dev.baskakov.eventmanagerservice.exception.CustomAccessDeniedHandler;
 import dev.baskakov.eventmanagerservice.exception.CustomAuthenticationEntryPoint;
 import dev.baskakov.eventmanagerservice.security.jwt.JwtTokenFilter;
-import dev.baskakov.eventmanagerservice.user.utils.CustomUserDetailsService;
+import dev.baskakov.eventmanagerservice.user.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,6 +23,21 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfiguration {
+
+    private final String[] SWAGGER_WHITELIST = {
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/swagger-resources",
+            "/webjars/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/event-manager-openapi.yaml",
+            "/api-docs/**",
+            "/openapi.json",
+            "/openapi.yaml"
+    };
 
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtTokenFilter  jwtTokenFilter;
@@ -47,6 +62,8 @@ public class SecurityConfiguration {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a ->
                         a
+                                .requestMatchers(SWAGGER_WHITELIST).permitAll()
+
                                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/users/auth").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/users/**").hasAnyAuthority("ADMIN")
@@ -56,6 +73,20 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.DELETE, "/locations/**").hasAuthority("ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/locations/**").hasAnyAuthority("ADMIN", "USER")
                                 .requestMatchers(HttpMethod.PUT, "/locations/**").hasAuthority("ADMIN")
+
+                                .requestMatchers(HttpMethod.POST, "/events").hasAuthority("USER")
+                                .requestMatchers(HttpMethod.DELETE, "/events/**").hasAnyAuthority("ADMIN", "USER")
+                                .requestMatchers(HttpMethod.GET, "/events/**").hasAnyAuthority("ADMIN", "USER")
+                                .requestMatchers(HttpMethod.PUT, "/events/**").hasAnyAuthority("ADMIN", "USER")
+
+                                .requestMatchers(HttpMethod.POST, "/events/search").hasAnyAuthority("ADMIN", "USER")
+
+                                .requestMatchers(HttpMethod.GET, "/events/my").hasAuthority("USER")
+
+                                .requestMatchers(HttpMethod.POST, "/events/registrations/**").hasAuthority("USER")
+                                .requestMatchers(HttpMethod.DELETE, "/events/registrations/cancel/**").hasAuthority("USER")
+                                .requestMatchers(HttpMethod.GET, "/events/registrations/my").hasAuthority("USER")
+
                                 .anyRequest()
                                 .authenticated()
                 )
