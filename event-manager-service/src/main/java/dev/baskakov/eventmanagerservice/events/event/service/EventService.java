@@ -70,13 +70,14 @@ public class EventService {
 
     public Event updateEventById(
             Long id,
-            EventUpdateRequestDto eventToUpdate
+            EventUpdateRequestDto eventToUpdateDto
     ) {
         log.info("EventService: updateEventById - start with event id: {}", id);
         var event = findEventById(id);
+        var eventToUpdateDomain = eventConverter.toDomainFromUpdateDto(eventToUpdateDto, event);
         validateCanModifyEvent(event);
-        validateCanUpdateEvent(event, eventToUpdate);
-        var updatedEvent = eventConverter.applyUpdateRequestDto(event, eventToUpdate);
+        validateCanUpdateEvent(event, eventToUpdateDomain);
+        var updatedEvent = eventConverter.applyUpdateRequestDto(event, eventToUpdateDomain);
         var eventEntity = eventConverter.toEntityFromDomain(updatedEvent);
         eventEntity = eventRepository.save(eventEntity);
         return eventConverter.toDomainFromEntity(eventEntity);
@@ -144,17 +145,16 @@ public class EventService {
         }
     }
 
-    private void validateCanUpdateEvent(Event event, EventUpdateRequestDto eventToUpdate) {
-        var eventToUpdateDomain = eventConverter.toDomainUpdateFromDto(eventToUpdate);
+    private void validateCanUpdateEvent(Event event, Event eventToUpdate) {
         if (!event.status().equals(EventStatus.WAIT_START)) {
             throw new IllegalArgumentException("Can't update this event, because event status is " + event.status());
         }
-        if (eventToUpdateDomain.maxPlaces() != null || eventToUpdateDomain.locationId() != null) {
-            Long  locationId = eventToUpdateDomain.locationId() != null
-                    ? eventToUpdateDomain.locationId()
+        if (eventToUpdate.maxPlaces() != null || eventToUpdate.locationId() != null) {
+            Long  locationId = eventToUpdate.locationId() != null
+                    ? eventToUpdate.locationId()
                     : event.locationId();
-            Integer maxPlaces = eventToUpdateDomain.maxPlaces() != null
-                    ? eventToUpdateDomain.maxPlaces()
+            Integer maxPlaces = eventToUpdate.maxPlaces() != null
+                    ? eventToUpdate.maxPlaces()
                     : event.maxPlaces();
             var currentLocation = locationService.getLocationById(locationId);
             if (currentLocation.capacity() <  maxPlaces) {
@@ -162,7 +162,7 @@ public class EventService {
             }
         }
 
-        if (eventToUpdateDomain.maxPlaces() != null && event.registrationList().size() < eventToUpdateDomain.maxPlaces()) {
+        if (eventToUpdate.maxPlaces() != null && event.registrationList().size() < eventToUpdate.maxPlaces()) {
             throw new IllegalArgumentException("Can't reduced places below current registration!");
         }
     }

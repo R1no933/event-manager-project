@@ -58,32 +58,32 @@ public class EventConverter {
     }
 
     public Event applyUpdateRequestDto(
-            Event event,
-            EventUpdateRequestDto eventUpdateRequestDto
+            Event existingEvent,
+            Event updatinEvent
             ) {
         return new Event(
-                event.id(),
-                eventUpdateRequestDto.name() != null
-                        ? eventUpdateRequestDto.name()
-                        : event.name(),
-                event.ownerId(),
-                eventUpdateRequestDto.maxPlaces() != null
-                        ? eventUpdateRequestDto.maxPlaces()
-                        : event.maxPlaces(),
-                event.registrationList(),
-                eventUpdateRequestDto.date() != null
-                        ? eventUpdateRequestDto.date()
-                        : event.date(),
-                eventUpdateRequestDto.cost() != null
-                        ? eventUpdateRequestDto.cost()
-                        : event.cost(),
-                eventUpdateRequestDto.duration() != null
-                        ? eventUpdateRequestDto.duration()
-                        : event.duration(),
-                eventUpdateRequestDto.locationId() != null
-                        ? eventUpdateRequestDto.locationId()
-                        : event.locationId(),
-                event.status()
+                existingEvent.id(),
+                updatinEvent.name() != null
+                        ? updatinEvent.name()
+                        : existingEvent.name(),
+                existingEvent.ownerId(),
+                updatinEvent.maxPlaces() != null
+                        ? updatinEvent.maxPlaces()
+                        : existingEvent.maxPlaces(),
+                existingEvent.registrationList(),
+                updatinEvent.date() != null
+                        ? updatinEvent.date()
+                        : existingEvent.date(),
+                updatinEvent.cost() != null
+                        ? updatinEvent.cost()
+                        : existingEvent.cost(),
+                updatinEvent.duration() != null
+                        ? updatinEvent.duration()
+                        : existingEvent.duration(),
+                updatinEvent.locationId() != null
+                        ? updatinEvent.locationId()
+                        : existingEvent.locationId(),
+                existingEvent.status()
         );
     }
 
@@ -142,14 +142,21 @@ public class EventConverter {
         );
     }
 
-    public EventUpdate toDomainUpdateFromDto(EventUpdateRequestDto eventUpdateRequestDto) {
-        return new EventUpdate(
+    public Event toDomainFromUpdateDto(
+            EventUpdateRequestDto eventUpdateRequestDto,
+            Event existingEvent
+    ) {
+        return new Event(
+                existingEvent.id(),
                 eventUpdateRequestDto.name(),
+                existingEvent.ownerId(),
                 eventUpdateRequestDto.maxPlaces(),
+                existingEvent.registrationList(),
                 eventUpdateRequestDto.date(),
                 eventUpdateRequestDto.cost(),
                 eventUpdateRequestDto.duration(),
-                eventUpdateRequestDto.locationId()
+                eventUpdateRequestDto.locationId(),
+                existingEvent.status()
         );
     }
 
