@@ -1,7 +1,7 @@
 package dev.baskakov.eventmanagerservice.security.jwt;
 
-import dev.baskakov.eventmanagerservice.user.User;
-import dev.baskakov.eventmanagerservice.user.UserService;
+import dev.baskakov.eventmanagerservice.user.model.domain.User;
+import dev.baskakov.eventmanagerservice.user.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,7 +1,7 @@
 package dev.baskakov.eventmanagerservice.security.jwt;
 
-import dev.baskakov.eventmanagerservice.user.User;
-import dev.baskakov.eventmanagerservice.user.utils.SignInRequest;
+import dev.baskakov.eventmanagerservice.user.model.domain.User;
+import dev.baskakov.eventmanagerservice.user.model.dto.SignInRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
