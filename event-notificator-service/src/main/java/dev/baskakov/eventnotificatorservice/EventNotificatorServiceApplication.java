@@ -1,4 +1,4 @@
-package dev.baskakov.eventnotificatornservice;
+package dev.baskakov.eventnotificatorservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
