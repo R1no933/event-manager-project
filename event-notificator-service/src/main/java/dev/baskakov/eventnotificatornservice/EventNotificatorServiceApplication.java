@@ -1,13 +1,13 @@
-package dev.baskakov.eventnotificationservice;
+package dev.baskakov.eventnotificatornservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class EventNotificationServiceApplication {
+public class EventNotificatorServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(EventNotificationServiceApplication.class, args);
+        SpringApplication.run(EventNotificatorServiceApplication.class, args);
     }
 
 }

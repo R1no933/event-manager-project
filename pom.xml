@@ -22,7 +22,7 @@
 
     <modules>
         <module>event-manager-service</module>
-        <module>event-notification-service</module>
+        <module>event-notificator-service</module>
     </modules>
 
     <properties>
