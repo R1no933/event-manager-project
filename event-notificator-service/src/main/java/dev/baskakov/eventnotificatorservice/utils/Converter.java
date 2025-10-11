@@ -30,14 +30,7 @@ public class Converter {
         Map<String,Object> fieldChanges = parseFieldChanges(entity.getFieldChanges());
         return new NotificationResponseDTO(
                 entity.getId(),
-                entity.getUserId(),
-                entity.getEventId(),
-                entity.getChangedByUserId(),
-                entity.getNotificationType(),
-                fieldChanges,
-                entity.getRead(),
-                entity.getCreatedAt(),
-                entity.getReadAt()
+                fieldChanges
         );
     }
 

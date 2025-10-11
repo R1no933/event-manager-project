@@ -10,7 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
@@ -30,10 +33,13 @@ public class NotificationService {
     public List<NotificationResponseDTO> getNotificationsByUserId(Long userId) {
         log.info("Getting notifications by userId {}", userId);
 
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
+        var listEntity = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        var listDTO = listEntity
                 .stream()
                 .map(converter::toResponseDTO)
                 .toList();
+
+        return listDTO;
     }
 
     @Transactional
