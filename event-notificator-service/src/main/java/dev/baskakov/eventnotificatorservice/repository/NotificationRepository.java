@@ -25,4 +25,8 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     void makeAsRead(
             @Param("ids") List<Long> ids
     );
+
+    @Modifying
+    @Query("DELETE FROM NotificationEntity ne WHERE ne.isRead = true")
+    void deleteAllReadOnlyNotifications();
 }
