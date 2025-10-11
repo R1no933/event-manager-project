@@ -7,6 +7,9 @@ import dev.baskakov.eventmanagerservice.events.event.model.dto.EventSearchReques
 import dev.baskakov.eventmanagerservice.events.event.model.dto.EventUpdateRequestDto;
 import dev.baskakov.eventmanagerservice.events.event.repository.EventRepository;
 import dev.baskakov.eventmanagerservice.events.event.utils.EventConverter;
+import dev.baskakov.eventmanagerservice.events.registration.model.domain.EventRegistration;
+import dev.baskakov.eventmanagerservice.kafka.EventNotificationMessage;
+import dev.baskakov.eventmanagerservice.kafka.EventNotificationSender;
 import dev.baskakov.eventmanagerservice.location.model.domain.Location;
 import dev.baskakov.eventmanagerservice.location.service.LocationService;
 import dev.baskakov.eventmanagerservice.security.jwt.AuthenticationService;
@@ -17,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class EventService {
@@ -27,16 +31,19 @@ public class EventService {
     private final LocationService locationService;
     private final AuthenticationService authenticationService;
     private final EventConverter eventConverter;
+    private final EventNotificationSender sender;
 
     public EventService(EventRepository eventRepository,
                         LocationService locationService,
                         AuthenticationService authenticationService,
-                        EventConverter eventConverter
+                        EventConverter eventConverter,
+                        EventNotificationSender sender
     ) {
         this.eventRepository = eventRepository;
         this.locationService = locationService;
         this.authenticationService = authenticationService;
         this.eventConverter = eventConverter;
+        this.sender = sender;
     }
 
     public Event createEvent(EventCreateRequestDto eventToCreate) {
@@ -61,10 +68,19 @@ public class EventService {
     public void cancelEventById(Long id) {
         log.info("EventService: cancelEventById - start with event id: {}", id);
         var event = findEventById(id);
+        var currentUser = authenticationService.getCurrentUser();
         validateCanModifyEvent(event);
         validateEventCanBeCancelled(event);
         var cancelledEvent = eventConverter.withStatus(event, EventStatus.CANCELLED);
         var eventEntity = eventConverter.toEntityFromDomain(cancelledEvent);
+
+        var message = eventConverter.toEventNotificationMessage(
+                event,
+                cancelledEvent,
+                currentUser.id()
+        );
+        sender.sendNotification(message);
+
         eventRepository.save(eventEntity);
     }
 
@@ -72,13 +88,21 @@ public class EventService {
             Long id,
             EventUpdateRequestDto eventToUpdateDto
     ) {
-        log.info("EventService: updateEventById - start with event id: {}", id);
         var event = findEventById(id);
+        var currentUser = authenticationService.getCurrentUser();
         var eventToUpdateDomain = eventConverter.toDomainFromUpdateDto(eventToUpdateDto, event);
         validateCanModifyEvent(event);
         validateCanUpdateEvent(event, eventToUpdateDomain);
         var updatedEvent = eventConverter.applyUpdateRequestDto(event, eventToUpdateDomain);
         var eventEntity = eventConverter.toEntityFromDomain(updatedEvent);
+
+        var message = eventConverter.toEventNotificationMessage(
+                event,
+                updatedEvent,
+                currentUser.id()
+        );
+        sender.sendNotification(message);
+
         eventEntity = eventRepository.save(eventEntity);
         return eventConverter.toDomainFromEntity(eventEntity);
     }
