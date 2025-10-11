@@ -3,8 +3,11 @@ package dev.baskakov.eventnotificatorservice.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.baskakov.eventnotificatorservice.model.domain.EventNotificationMessage;
-import dev.baskakov.eventnotificatorservice.model.domain.FieldChange;
+import dev.baskakov.eventnotificatorservice.kafka.EventNotificationMessage;
+import dev.baskakov.eventnotificatorservice.kafka.FieldChange;
+import dev.baskakov.eventnotificatorservice.model.domain.MarkAsReadRequest;
+import dev.baskakov.eventnotificatorservice.model.domain.NotificationResponse;
+import dev.baskakov.eventnotificatorservice.model.dto.MarkAsReadRequestDTO;
 import dev.baskakov.eventnotificatorservice.model.dto.NotificationResponseDTO;
 import dev.baskakov.eventnotificatorservice.model.entity.NotificationEntity;
 import org.slf4j.Logger;
@@ -24,13 +27,30 @@ public class Converter {
         this.objectMapper = objectMapper;
     }
 
-    public NotificationResponseDTO toResponseDTO(
+    public NotificationResponse toResponse(
             NotificationEntity entity
     ) {
         Map<String,Object> fieldChanges = parseFieldChanges(entity.getFieldChanges());
-        return new NotificationResponseDTO(
+        return new NotificationResponse(
                 entity.getId(),
                 fieldChanges
+        );
+    }
+
+    public MarkAsReadRequest toRequest(
+            MarkAsReadRequestDTO requestDTO
+    ) {
+        return new MarkAsReadRequest(
+                requestDTO.notificationIds()
+        );
+    }
+
+    public NotificationResponseDTO toDTO(
+            NotificationResponse response
+    ) {
+        return new NotificationResponseDTO(
+                response.eventId(),
+                response.fieldChanges()
         );
     }
 
@@ -62,7 +82,7 @@ public class Converter {
         }
 
         try {
-            return objectMapper.readValue(fieldsChangesJson, new TypeReference<Map<String, Object>>() {});
+            return objectMapper.readValue(fieldsChangesJson, new TypeReference<>() {});
         } catch (JsonProcessingException ex) {
             log.error("Could not parse field changes {}", fieldsChangesJson, ex);
             return Map.of("error", "Could not parse field changes ");

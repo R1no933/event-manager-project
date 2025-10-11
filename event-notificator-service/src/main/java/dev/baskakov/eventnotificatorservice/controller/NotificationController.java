@@ -1,9 +1,11 @@
 package dev.baskakov.eventnotificatorservice.controller;
 
+import dev.baskakov.eventnotificatorservice.model.domain.NotificationResponse;
 import dev.baskakov.eventnotificatorservice.model.dto.MarkAsReadRequestDTO;
 import dev.baskakov.eventnotificatorservice.model.dto.NotificationResponseDTO;
 import dev.baskakov.eventnotificatorservice.security.jwt.JwtTokenFilter;
 import dev.baskakov.eventnotificatorservice.service.NotificationService;
+import dev.baskakov.eventnotificatorservice.utils.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,26 +20,35 @@ import java.util.List;
 public class NotificationController {
     private static final Logger log = LoggerFactory.getLogger(NotificationController.class);
     private final NotificationService notificationService;
+    private final Converter converter;
 
-    public NotificationController(NotificationService notificationService) {
+
+    public NotificationController(
+            NotificationService notificationService,
+            Converter converter
+    ) {
         this.notificationService = notificationService;
+        this.converter = converter;
     }
 
     @GetMapping
     public ResponseEntity<List<NotificationResponseDTO>> getAllNotificationsForUser(
             @AuthenticationPrincipal JwtTokenFilter.SimpleUser currentUser
-            ) {
+    ) {
 
         Long userId = currentUser.id();
         log.info("Getting all notifications for user {}", userId);
-
         try {
-            List<NotificationResponseDTO> notifications = notificationService.getNotificationsByUserId(userId);
+            List<NotificationResponse> notifications = notificationService.getNotificationsByUserId(userId);
+            var notificationDTOList = notifications
+                    .stream()
+                    .map(converter::toDTO)
+                    .toList();
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(notifications);
-        } catch (Exception e) {
-            log.error("Error while getting all notifications for user {}", userId, e);
+                    .body(notificationDTOList);
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .build();
@@ -47,10 +58,10 @@ public class NotificationController {
     @PostMapping
     public ResponseEntity<Void> makeNotificationAsRead(
             @RequestBody MarkAsReadRequestDTO markAsReadRequestDTO
-            )
-    {
+    ) {
         try {
-            notificationService.makeNotificationAsRead(markAsReadRequestDTO);
+            var markAsRequest = converter.toRequest(markAsReadRequestDTO);
+            notificationService.makeNotificationAsRead(markAsRequest);
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .build();

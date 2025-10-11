@@ -1,7 +1,6 @@
 package dev.baskakov.eventnotificatorservice.kafka;
 
 import dev.baskakov.eventnotificatorservice.model.NotificationType;
-import dev.baskakov.eventnotificatorservice.model.domain.EventNotificationMessage;
 import dev.baskakov.eventnotificatorservice.model.entity.NotificationEntity;
 import dev.baskakov.eventnotificatorservice.repository.NotificationRepository;
 import dev.baskakov.eventnotificatorservice.utils.Converter;
@@ -10,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Component
 public class NotificationConsumer {

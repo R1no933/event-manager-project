@@ -1,7 +1,7 @@
 package dev.baskakov.eventnotificatorservice.service;
 
-import dev.baskakov.eventnotificatorservice.model.dto.MarkAsReadRequestDTO;
-import dev.baskakov.eventnotificatorservice.model.dto.NotificationResponseDTO;
+import dev.baskakov.eventnotificatorservice.model.domain.MarkAsReadRequest;
+import dev.baskakov.eventnotificatorservice.model.domain.NotificationResponse;
 import dev.baskakov.eventnotificatorservice.model.entity.NotificationEntity;
 import dev.baskakov.eventnotificatorservice.repository.NotificationRepository;
 import dev.baskakov.eventnotificatorservice.utils.Converter;
@@ -27,21 +27,20 @@ public class NotificationService {
         this.converter = converter;
     }
 
-    public List<NotificationResponseDTO> getNotificationsByUserId(Long userId) {
+    public List<NotificationResponse> getNotificationsByUserId(Long userId) {
         log.info("Getting notifications by userId {}", userId);
-
         var listEntity = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        var listDTO = listEntity
+        var listDomain = listEntity
                 .stream()
-                .map(converter::toResponseDTO)
+                .map(converter::toResponse)
                 .toList();
 
-        return listDTO;
+        return listDomain;
     }
 
     @Transactional
-    public void makeNotificationAsRead(MarkAsReadRequestDTO requestDTO) {
-        List<Long> notificationIds = requestDTO.notificationIds();
+    public void makeNotificationAsRead(MarkAsReadRequest request) {
+        List<Long> notificationIds = request.notificationIds();
 
         if (notificationIds.isEmpty()) {
             log.info("No notifications for making as read");
