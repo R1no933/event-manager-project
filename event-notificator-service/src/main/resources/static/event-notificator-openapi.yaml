@@ -18,7 +18,7 @@ paths:
         ID пользователя и его роль должна извлекаться из JWT токена.
         JWT токен выдается другим сервисом - сервисом event-manager.
       security:
-        - BearerAuth: []
+        - bearerAuth: []
       responses:
         '200':
           description: Успешно возвращается список нотификаций пользователя
@@ -48,7 +48,7 @@ paths:
         ID пользователя и его роль должна извлекаться из JWT токена.
         JWT токен выдается другим сервисом - сервисом event-manager.
       security:
-        - BearerAuth: []
+        - bearerAuth: []
       requestBody:
         required: true
         content:

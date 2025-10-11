@@ -2,11 +2,13 @@ package dev.baskakov.eventnotificatorservice.controller;
 
 import dev.baskakov.eventnotificatorservice.model.dto.MarkAsReadRequestDTO;
 import dev.baskakov.eventnotificatorservice.model.dto.NotificationResponseDTO;
+import dev.baskakov.eventnotificatorservice.security.jwt.JwtTokenFilter;
 import dev.baskakov.eventnotificatorservice.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,10 +23,12 @@ public class NotificationController {
         this.notificationService = notificationService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping
     public ResponseEntity<List<NotificationResponseDTO>> getAllNotificationsForUser(
-            @PathVariable("id") Long userId
-    ) {
+            @AuthenticationPrincipal JwtTokenFilter.SimpleUser currentUser
+            ) {
+
+        Long userId = currentUser.id();
         log.info("Getting all notifications for user {}", userId);
 
         try {
