@@ -11,9 +11,15 @@ import dev.baskakov.eventmanagerservice.events.event.model.dto.EventUpdateReques
 import dev.baskakov.eventmanagerservice.events.event.model.entity.EventEntity;
 import dev.baskakov.eventmanagerservice.events.registration.model.domain.EventRegistration;
 import dev.baskakov.eventmanagerservice.events.registration.model.entity.EventRegistrationEntity;
+import dev.baskakov.eventmanagerservice.kafka.EventNotificationMessage;
+import dev.baskakov.eventmanagerservice.kafka.FieldChange;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
 @Component
 public class EventConverter {
@@ -60,7 +66,7 @@ public class EventConverter {
     public Event applyUpdateRequestDto(
             Event existingEvent,
             Event updatinEvent
-            ) {
+    ) {
         return new Event(
                 existingEvent.id(),
                 updatinEvent.name() != null
@@ -104,26 +110,31 @@ public class EventConverter {
 
 
     public EventEntity toEntityFromDomain(Event event) {
-        return new EventEntity(
+        EventEntity entity =  new EventEntity(
                 event.id() != null ? event.id() : null,
                 event.name(),
                 event.ownerId(),
                 event.maxPlaces(),
-                event.registrationList()
-                        .stream()
-                        .map(e ->
-                                new EventRegistrationEntity(
-                                        e.id(),
-                                        e.userId(),
-                                        this.toEntityFromDomain(event))
-                        )
-                        .toList(),
+                Collections.emptyList(),
                 event.date(),
                 event.cost(),
                 event.duration(),
                 event.locationId(),
                 event.status()
         );
+
+        List<EventRegistrationEntity> eventRegistrationList = event.registrationList()
+                .stream()
+                .map(e -> new EventRegistrationEntity(
+                        e.id(),
+                        e.userId(),
+                        entity
+                ))
+                .toList();
+
+        entity.setRegistrationList(eventRegistrationList);
+
+        return entity;
     }
 
     public EventSearch toDomainSearchFromDto(EventSearchRequestDto eventSearchRequestDto) {
@@ -175,5 +186,50 @@ public class EventConverter {
                 event.locationId(),
                 eventStatus
         );
+    }
+
+    public EventNotificationMessage toEventNotificationMessage(
+            Event beforeUpdate,
+            Event afterUpdate,
+            Long userId
+    ) {
+        List<Long> usersIds = afterUpdate.registrationList() == null
+                ? List.of()
+                : afterUpdate.registrationList()
+                .stream()
+                .map(EventRegistration::eventId)
+                .toList();
+
+        return new EventNotificationMessage(
+                beforeUpdate.id(),
+                usersIds,
+                beforeUpdate.ownerId(),
+                userId,
+                createFieldChange(beforeUpdate, afterUpdate, Event::name),
+                createFieldChange(beforeUpdate, afterUpdate, Event::maxPlaces),
+                createFieldChange(beforeUpdate, afterUpdate, Event::date),
+                createFieldChange(beforeUpdate, afterUpdate, Event::cost),
+                createFieldChange(beforeUpdate, afterUpdate, Event::duration),
+                createFieldChange(beforeUpdate, afterUpdate, Event::locationId),
+                createFieldChange(beforeUpdate, afterUpdate, Event::status)
+        );
+    }
+
+    private <T> FieldChange<T> createFieldChange(
+            Event beforeUpdate,
+            Event afterUpdate,
+            Function<Event, T> fieldExtractor
+    ) {
+        T before = beforeUpdate != null
+                ? fieldExtractor.apply(beforeUpdate)
+                : null;
+        T after = afterUpdate != null
+                ? fieldExtractor.apply(afterUpdate)
+                : null;
+
+        if (Objects.equals(before, after)) {
+            return null;
+        }
+        return new FieldChange<>(before, after);
     }
 }

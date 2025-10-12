@@ -1,5 +1,6 @@
 package dev.baskakov.eventmanagerservice.security.jwt;
 
+import dev.baskakov.eventmanagerservice.user.model.UserRole;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,10 +22,12 @@ public class JwtTokenManager {
         this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes());
     }
 
-    public String generateToken(String login){
+    public String generateToken(String login, Long userId, UserRole role) {
         return Jwts
                 .builder()
                 .subject(login)
+                .claim("userId", userId)
+                .claim("userRole", role)
                 .signWith(secretKey)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expTime))
